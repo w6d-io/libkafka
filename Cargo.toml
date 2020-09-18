@@ -1,0 +1,17 @@
+[package]
+name = "libkafka"
+version = "0.1.0"
+authors = ["grumbach <anselmega@gmail.com>"]
+
+[lib]
+name = "kafka"
+crate-type = ["cdylib", "lib"]
+
+[features]
+python = ["cpython"]
+
+[dependencies]
+rdkafka = { version = "0.24", features = ["cmake-build"] }
+tokio = { version = "0.2", features = ["full"] }
+futures = "0.3.0"
+cpython = { optional = true, version = "0.5", features = ["extension-module"] }
