@@ -1,4 +1,3 @@
-extern crate libkafka;
 use libkafka::{produce, consume};
 
 fn main() {

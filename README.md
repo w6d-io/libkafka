@@ -22,7 +22,7 @@ ls ./target/release/libkafka.rlib
 use libkafka::{produce, consume};
 
 produce("KAFKA_TOPIC", "hello world");
-consume("KAFKA_TOPIC");
+let msg = consume("KAFKA_TOPIC");
 ```
 
 ## Build for python
@@ -39,5 +39,11 @@ Then simply copy the `kafka.so` file to the root of your python project and simp
 from kafka import consume, produce
 
 produce("KAFKA_TOPIC", "hello world")
-consume("KAFKA_TOPIC")
+msg = consume("KAFKA_TOPIC")
 ```
+
+## Refs
+
+* [smol](https://github.com/stjepang/smol)
+* [rdkafka smol](https://github.com/fede1024/rust-rdkafka/blob/master/examples/smol_runtime.rs)
+* [cpython crate](https://crates.io/crates/cpython)

@@ -2,6 +2,7 @@
 name = "libkafka"
 version = "0.1.0"
 authors = ["grumbach <anselmega@gmail.com>"]
+edition = "2018"
 
 [lib]
 name = "kafka"
@@ -14,4 +15,6 @@ python = ["cpython"]
 rdkafka = { version = "0.24", features = ["cmake-build"] }
 tokio = { version = "0.2", features = ["full"] }
 futures = "0.3.0"
+smol = "1.1.0"
+
 cpython = { optional = true, version = "0.5", features = ["extension-module"] }
