@@ -13,7 +13,7 @@ mod tests {
     #[test]
     fn test_produce_consume() {
         let message = get_random_string(12);
-        assert_eq!(Ok(()), produce("KAFKA_TOPIC", &message));
-        assert_eq!(Ok(message), consume("KAFKA_TOPIC"));
+        assert_eq!(Ok(()), produce("LIBKAFKA_TEST_TOPIC", &message));
+        assert_eq!(Ok(message), consume("LIBKAFKA_TEST_TOPIC"));
     }
 }
