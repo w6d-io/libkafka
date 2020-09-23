@@ -29,15 +29,22 @@ impl AsyncRuntime for SmolRuntime {
 
 pub fn consume(topic_name: &str) -> Result<String, String> {
     smol::block_on(async {
-        let consumer: StreamConsumer = ClientConfig::new()
+        let c = ClientConfig::new()
             .set("bootstrap.servers", "localhost:9092")
             .set("session.timeout.ms", "6000")
             .set("enable.auto.commit", "true")
             .set("auto.offset.reset", "earliest")
-            .set("group.id", "rust-rdkafka-smol-runtime-example")
-            .create()
-            .expect("Consumer creation failed");
-        consumer.subscribe(&[topic_name]).unwrap();
+            .set("group.id", &format!("{}_ID", topic_name))
+            .create();
+        let consumer: StreamConsumer;
+        match c {
+            Ok(con) => {consumer = con;},
+            Err(e) => {return Err(format!("unable to create producer: {}", e));},
+        }
+        match consumer.subscribe(&[topic_name]) {
+            Err(e) => {return Err(format!("unable to create consumer: {}", e))}
+            _ => {}
+        }
 
         let mut stream =
             consumer.start_with_runtime::<SmolRuntime>(Duration::from_millis(100), false);

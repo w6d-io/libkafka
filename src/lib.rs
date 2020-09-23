@@ -13,8 +13,7 @@ extern crate cpython;
 pub use cpython::{PyResult, Python, py_module_initializer, py_fn};
 
 #[cfg(all(feature = "python"))]
-pub fn produce_py(py: Python, topic: &str, message: &str) -> PyResult<String> {
-    println!("python {} {}", topic, message);
+pub fn produce_py(_py: Python, topic: &str, message: &str) -> PyResult<String> {
     let res = produce(topic, message);
     match res {
         Ok (()) => Ok("ok".to_string()),
@@ -23,8 +22,7 @@ pub fn produce_py(py: Python, topic: &str, message: &str) -> PyResult<String> {
 }
 
 #[cfg(all(feature = "python"))]
-pub fn consume_py(py: Python, topic: &str) -> PyResult<String> {
-    println!("python {}", topic);
+pub fn consume_py(_py: Python, topic: &str) -> PyResult<String> {
     Ok(consume(topic).unwrap_or("error".to_string()))
 }
 
