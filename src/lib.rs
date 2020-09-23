@@ -1,35 +1,44 @@
 pub mod consumer;
 pub mod producer;
 
+// Rust Bindings
+#[cfg(not(feature = "python"))]
 pub use consumer::consume;
+#[cfg(not(feature = "python"))]
 pub use producer::produce;
 
 // Python bindings
+#[cfg(all(feature = "python"))]
+use pyo3::prelude::*;
+#[cfg(all(feature = "python"))]
+use pyo3::{wrap_pyfunction, Python};
+#[cfg(all(feature = "python"))]
+use pyo3::exceptions::PyOSError;
 
 #[cfg(all(feature = "python"))]
-extern crate cpython;
-
-#[cfg(all(feature = "python"))]
-pub use cpython::{PyResult, Python, py_module_initializer, py_fn};
-
-#[cfg(all(feature = "python"))]
-pub fn produce_py(_py: Python, topic: &str, message: &str) -> PyResult<String> {
-    let res = produce(topic, message);
+#[pyfunction]
+pub fn produce(topic: &str, message: &str) -> PyResult<()> {
+    let res = producer::produce(topic, message);
     match res {
-        Ok (()) => Ok("ok".to_string()),
-        Err(e) => Ok(e),
+        Ok(_) => Ok(()),
+        Err(err) => Err(PyOSError::new_err(err)),
     }
 }
 
 #[cfg(all(feature = "python"))]
-pub fn consume_py(_py: Python, topic: &str) -> PyResult<String> {
-    Ok(consume(topic).unwrap_or("error".to_string()))
+#[pyfunction]
+pub fn consume(topic: &str) -> PyResult<String> {
+    let res = consumer::consume(topic);
+    match res {
+        Ok(result) => Ok(result),
+        Err(err) => Err(PyOSError::new_err(err)),
+    }
 }
 
 #[cfg(all(feature = "python"))]
-py_module_initializer!(kafka, |py, m| {
-    m.add(py, "__doc__", "This module is implemented in Rust.")?;
-    m.add(py, "produce", py_fn!(py, produce_py(topic: &str, message: &str)))?;
-    m.add(py, "consume", py_fn!(py, consume_py(topic: &str)))?;
+#[pymodule]
+fn kafka(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(consume, m)?)?;
+    m.add_function(wrap_pyfunction!(produce, m)?)?;
     Ok(())
-});
+}

@@ -9,12 +9,11 @@ name = "kafka"
 crate-type = ["cdylib", "lib"]
 
 [features]
-python = ["cpython"]
+python = ["pyo3"]
 
 [dependencies]
 rdkafka = { version = "0.24", features = ["cmake-build"] }
 tokio = { version = "0.2", features = ["full"] }
 futures = "0.3.0"
 smol = "1.1.0"
-
-cpython = { optional = true, version = "0.5", features = ["extension-module"] }
+pyo3 = { optional = true, version = "0.12.1", features = ["extension-module"] }

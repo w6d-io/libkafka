@@ -22,7 +22,7 @@ class TestKafkaLib(unittest.TestCase):
 
     def test_produce_consume(self):
         message = get_random_string(12)
-        self.assertEqual("ok", kafka.produce("LIBKAFKA_PYTHON_TEST_TOPIC", message))
+        self.assertEqual(None, kafka.produce("LIBKAFKA_PYTHON_TEST_TOPIC", message))
         self.assertEqual(message, kafka.consume("LIBKAFKA_PYTHON_TEST_TOPIC"))
 
 if __name__ == '__main__':
