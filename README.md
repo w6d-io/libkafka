@@ -12,7 +12,14 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-libkafka = { git = "git@gitlab.w6d.io:w6d/ia/ml/libkafka.git" }
+libkafka = { git = "https://gitlab.w6d.io/w6d/ia/ml/libkafka.git" }
+```
+
+Add this to your `.cargo/config`
+
+```toml
+[net]
+git-fetch-with-cli = true
 ```
 
 ```bash
