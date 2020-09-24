@@ -4,6 +4,8 @@ Easy as pie rust lib for Kafka with python bindings.
 
 <!-- ![](./libkafka.jpg) -->
 
+See usage examples in `./tests` directory.
+
 ## Build for rust
 
 Add this to your `Cargo.toml`:
@@ -19,10 +21,12 @@ ls ./target/release/libkafka.rlib
 ```
 
 ```rust
-use libkafka::{produce, consume};
+use kafka::{produce, KafkaConsumer};
 
 produce("KAFKA_TOPIC", "hello world");
-let msg = consume("KAFKA_TOPIC");
+
+let consumer = KafkaConsumer::new("KAFKA_TOPIC").unwrap();
+let msg = consumer.consume().unwrap();
 ```
 
 ## Build for python
@@ -36,14 +40,19 @@ cp ./target/release/libkafka.dylib kafka.so
 Then simply copy the `kafka.so` file to the root of your python project and simply :
 
 ```python
-from kafka import consume, produce
+from kafka import produce, Consumer
 
 produce("KAFKA_TOPIC", "hello world")
-msg = consume("KAFKA_TOPIC")
+
+consumer = Consumer("KAFKA_TOPIC")
+msg = consumer.consume()
 ```
 
 ## Refs
 
+* [rdkafka](https://github.com/fede1024/rust-rdkafka)
+    * [rdkafka smol](https://github.com/fede1024/rust-rdkafka/blob/master/examples/smol_runtime.rs)
+    * [poll](https://docs.rs/rdkafka/0.24.0/rdkafka/consumer/base_consumer/struct.BaseConsumer.html#method.poll)
 * [smol](https://github.com/stjepang/smol)
-* [rdkafka smol](https://github.com/fede1024/rust-rdkafka/blob/master/examples/smol_runtime.rs)
-* [cpython crate](https://crates.io/crates/cpython)
+* [PYO3 rust python bindings](https://github.com/PyO3/pyo3)
+* [local kafka](https://kafka.apache.org/quickstart)

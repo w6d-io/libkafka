@@ -15,15 +15,19 @@ def get_random_string(length):
     return result_str
 
 class TestKafkaLib(unittest.TestCase):
-
     def test_lib_contains_funcs(self):
-        self.assertTrue("consume" in dir(kafka))
+        self.assertTrue("Consumer" in dir(kafka))
         self.assertTrue("produce" in dir(kafka))
 
-    def test_produce_consume(self):
+    def test_produce_and_consume(self):
         message = get_random_string(12)
+
         self.assertEqual(None, kafka.produce("LIBKAFKA_PYTHON_TEST_TOPIC", message))
-        self.assertEqual(message, kafka.consume("LIBKAFKA_PYTHON_TEST_TOPIC"))
+        self.assertEqual(None, kafka.produce("LIBKAFKA_PYTHON_TEST_TOPIC", message))
+
+        consumer = kafka.Consumer("LIBKAFKA_PYTHON_TEST_TOPIC")
+        self.assertEqual(message, consumer.consume())
+        self.assertEqual(message, consumer.consume())
 
 if __name__ == '__main__':
     unittest.main()
