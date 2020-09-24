@@ -22,10 +22,10 @@ class TestKafkaLib(unittest.TestCase):
     def test_produce_and_consume(self):
         message = get_random_string(12)
 
-        self.assertEqual(None, kafka.produce("LIBKAFKA_PYTHON_TEST_TOPIC", message))
-        self.assertEqual(None, kafka.produce("LIBKAFKA_PYTHON_TEST_TOPIC", message))
+        self.assertEqual(None, kafka.produce("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC", message))
+        self.assertEqual(None, kafka.produce("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC", message))
 
-        consumer = kafka.Consumer("LIBKAFKA_PYTHON_TEST_TOPIC")
+        consumer = kafka.Consumer("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC")
         self.assertEqual(message, consumer.consume())
         self.assertEqual(message, consumer.consume())
 

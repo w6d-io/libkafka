@@ -13,10 +13,10 @@ mod tests {
     #[test]
     fn test_produce_consume() {
         let message = get_random_string(12);
-        assert_eq!(Ok(()), produce("LIBKAFKA_TEST_TOPIC", &message));
-        assert_eq!(Ok(()), produce("LIBKAFKA_TEST_TOPIC", &message));
+        assert_eq!(Ok(()), produce("localhost:9092", "LIBKAFKA_TEST_TOPIC", &message));
+        assert_eq!(Ok(()), produce("localhost:9092", "LIBKAFKA_TEST_TOPIC", &message));
 
-        let maybe_consumer = KafkaConsumer::new("LIBKAFKA_TEST_TOPIC");
+        let maybe_consumer = KafkaConsumer::new("localhost:9092", "LIBKAFKA_TEST_TOPIC");
         assert_eq!(maybe_consumer.is_ok(), true);
         let mut consumer = maybe_consumer.unwrap();
 

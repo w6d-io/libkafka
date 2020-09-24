@@ -20,8 +20,8 @@ use pyo3::exceptions::PyOSError;
 /// produce function for Python
 #[cfg(all(feature = "python"))]
 #[pyfunction]
-pub fn produce(topic: &str, message: &str) -> PyResult<()> {
-    let res = producer::produce(topic, message);
+pub fn produce(broker: &str, topic_name: &str, message: &str) -> PyResult<()> {
+    let res = producer::produce(broker, topic_name, message);
     match res {
         Ok(_) => Ok(()),
         Err(err) => Err(PyOSError::new_err(err)),
@@ -39,8 +39,8 @@ struct Consumer {
 #[pymethods]
 impl Consumer {
     #[new]
-    fn new(topic_name: &str) -> PyResult<Self> {
-        let maybe_consumer = KafkaConsumer::new(topic_name);
+    fn new(broker: &str, topic_name: &str) -> PyResult<Self> {
+        let maybe_consumer = KafkaConsumer::new(broker, topic_name);
         match maybe_consumer {
             Ok(c) => Ok(Consumer{c: c}),
             Err(err) => Err(PyOSError::new_err(err)),

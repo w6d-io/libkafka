@@ -18,10 +18,11 @@ impl std::fmt::Debug for KafkaConsumer {
 }
 
 impl KafkaConsumer {
-    pub fn new(topic_name: &str) -> Result<KafkaConsumer, String> {
+    pub fn new(broker: &str, topic_name: &str) -> Result<KafkaConsumer, String> {
         let c = ClientConfig::new()
-            .set("bootstrap.servers", "localhost:9092")
+            .set("bootstrap.servers", broker)
             .set("session.timeout.ms", "6000")
+            .set("enable.partition.eof", "false")
             .set("enable.auto.commit", "true")
             .set("auto.offset.reset", "earliest")
             .set("group.id", &format!("{}_ID", topic_name))
