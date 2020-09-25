@@ -30,9 +30,10 @@ ls ./target/release/libkafka.rlib
 ```rust
 use kafka::{produce, KafkaConsumer};
 
-produce("KAFKA_TOPIC", "hello world");
+let broker = "localhost:9092";
+produce(broker, "KAFKA_TOPIC", "hello world");
 
-let consumer = KafkaConsumer::new("KAFKA_TOPIC").unwrap();
+let mut consumer = KafkaConsumer::new(broker, "KAFKA_TOPIC").unwrap();
 let msg = consumer.consume().unwrap();
 ```
 
@@ -49,9 +50,10 @@ Then simply copy the `kafka.so` file to the root of your python project and simp
 ```python
 from kafka import produce, Consumer
 
-produce("KAFKA_TOPIC", "hello world")
+broker = "localhost:9092"
+produce(broker, "KAFKA_TOPIC", "hello world")
 
-consumer = Consumer("KAFKA_TOPIC")
+consumer = Consumer(broker, "KAFKA_TOPIC")
 msg = consumer.consume()
 ```
 
