@@ -26,7 +26,7 @@ impl KafkaProducer {
         if let Err((e, _)) = delivery_status {
             return Err(KafkaError::DeliveryError(format!("{}", e)));
         };
-        self.producer.flush(Duration::from_secs(0));
+        self.producer.flush(Duration::from_secs(10));
         Ok(())
     }
 }
