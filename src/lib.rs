@@ -1,31 +1,44 @@
-mod runtime;
-
 pub mod error;
 pub mod consumer;
 pub mod producer;
 
 // Rust Bindings
 pub use consumer::KafkaConsumer;
-#[cfg(not(feature = "python"))]
-pub use producer::produce;
-
+pub use producer::KafkaProducer;
 
 // Python bindings
 #[cfg(all(feature = "python"))]
 use pyo3::prelude::*;
 #[cfg(all(feature = "python"))]
-use pyo3::{wrap_pyfunction, Python};
+use pyo3::{Python};
 #[cfg(all(feature = "python"))]
 use pyo3::exceptions::PyOSError;
 
-/// produce function for Python
+/// Producer class for Python
 #[cfg(all(feature = "python"))]
-#[pyfunction]
-pub fn produce(broker: &str, topic_name: &str, message: &str) -> PyResult<()> {
-    let res = producer::produce(broker, topic_name, message);
-    match res {
-        Ok(_) => Ok(()),
-        Err(err) => Err(PyOSError::new_err(err.to_string())),
+#[pyclass]
+struct Producer {
+   p: producer::KafkaProducer,
+}
+
+#[cfg(all(feature = "python"))]
+#[pymethods]
+impl Producer {
+    #[new]
+    fn new(broker: &str, topic_name: &str) -> PyResult<Self> {
+        let maybe_producer = KafkaProducer::new(broker, topic_name);
+        match maybe_producer {
+            Ok(p) => Ok(Producer{p: p}),
+            Err(err) => Err(PyOSError::new_err(err.to_string())),
+        }
+    }
+
+    fn produce(&mut self, message: &str) -> PyResult<()> {
+        let res = self.p.produce(message);
+        match res {
+            Ok(()) => Ok(()),
+            Err(err) => Err(PyOSError::new_err(err.to_string())),
+        }
     }
 }
 
@@ -60,7 +73,7 @@ impl Consumer {
 #[cfg(all(feature = "python"))]
 #[pymodule]
 fn kafka(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(produce, m)?)?;
     m.add_class::<Consumer>()?;
+    m.add_class::<Producer>()?;
     Ok(())
 }

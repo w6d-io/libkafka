@@ -28,13 +28,15 @@ ls ./target/release/libkafka.rlib
 ```
 
 ```rust
-use kafka::{produce, KafkaConsumer};
+use kafka::{KafkaProducer, KafkaConsumer};
 
 let broker = "localhost:9092";
-produce(broker, "KAFKA_TOPIC", "hello world");
+
+let producer = KafkaProducer::new(broker, "KAFKA_TOPIC").unwrap();
+producer.produce(broker, "KAFKA_TOPIC", "message").unwrap();
 
 let mut consumer = KafkaConsumer::new(broker, "KAFKA_TOPIC").unwrap();
-let msg = consumer.consume().unwrap();
+let message = consumer.consume().unwrap();
 ```
 
 ## Build for python
@@ -48,13 +50,15 @@ cp ./target/release/libkafka.dylib kafka.so
 Then simply copy the `kafka.so` file to the root of your python project and simply :
 
 ```python
-from kafka import produce, Consumer
+from kafka import Producer, Consumer
 
 broker = "localhost:9092"
-produce(broker, "KAFKA_TOPIC", "hello world")
+
+producer = Producer(broker, "KAFKA_TOPIC")
+producer.produce("message")
 
 consumer = Consumer(broker, "KAFKA_TOPIC")
-msg = consumer.consume()
+message = consumer.consume()
 ```
 
 ## Refs
@@ -62,6 +66,9 @@ msg = consumer.consume()
 * [rdkafka](https://github.com/fede1024/rust-rdkafka)
     * [rdkafka smol](https://github.com/fede1024/rust-rdkafka/blob/master/examples/smol_runtime.rs)
     * [poll](https://docs.rs/rdkafka/0.24.0/rdkafka/consumer/base_consumer/struct.BaseConsumer.html#method.poll)
-* [smol](https://github.com/stjepang/smol)
+    * [base producer](https://docs.rs/rdkafka/0.24.0/rdkafka/producer/base_producer/struct.BaseProducer.html)
 * [PYO3 rust python bindings](https://github.com/PyO3/pyo3)
+* [error management](https://nick.groenen.me/posts/rust-error-handling/)
+    * [thiserror](https://github.com/dtolnay/thiserror)
 * [local kafka](https://kafka.apache.org/quickstart)
+* [smol](https://github.com/stjepang/smol)

@@ -17,13 +17,14 @@ def get_random_string(length):
 class TestKafkaLib(unittest.TestCase):
     def test_lib_contains_funcs(self):
         self.assertTrue("Consumer" in dir(kafka))
-        self.assertTrue("produce" in dir(kafka))
+        self.assertTrue("Producer" in dir(kafka))
 
     def test_produce_and_consume(self):
         message = get_random_string(12)
 
-        self.assertEqual(None, kafka.produce("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC", message))
-        self.assertEqual(None, kafka.produce("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC", message))
+        producer = kafka.Producer("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC")
+        self.assertEqual(None, producer.produce(message))
+        self.assertEqual(None, producer.produce(message))
 
         consumer = kafka.Consumer("localhost:9092", "LIBKAFKA_PYTHON_TEST_TOPIC")
         self.assertEqual(message, consumer.consume())

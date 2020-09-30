@@ -8,7 +8,6 @@ pub enum KafkaError {
     EmptyMsgError,
     #[error("unable to send message: `{0}`")]
     DeliveryError(String),
-
     #[error(transparent)]
     KafkaError(#[from] rdkafka::error::KafkaError)
 }
