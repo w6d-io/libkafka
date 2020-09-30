@@ -1,22 +1,16 @@
-extern crate rdkafka;
-
 use std::time::{Duration};
 use rdkafka::config::ClientConfig;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
 use crate::runtime::SmolRuntime;
+use crate::error::KafkaError;
 
-pub fn produce(broker: &str, topic_name: &str, message: &str) -> Result<(), String> {
+pub fn produce(broker: &str, topic_name: &str, message: &str) -> Result<(), KafkaError> {
     smol::block_on(async {
-        let p = ClientConfig::new()
+        let producer: FutureProducer = ClientConfig::new()
             .set("bootstrap.servers", broker)
             .set("message.timeout.ms", "5000")
-            .create();
-        let producer: FutureProducer;
-        match p {
-            Ok(pro) => {producer = pro;},
-            Err(e) => {return Err(format!("unable to create producer: {}", e));},
-        }
+            .create()?;
 
         let delivery_status = producer
             .send_with_runtime::<SmolRuntime, Vec<u8>, _, _>(
@@ -25,8 +19,7 @@ pub fn produce(broker: &str, topic_name: &str, message: &str) -> Result<(), Stri
             )
             .await;
         if let Err((e, _)) = delivery_status {
-            println!("unable to send message: {}", e);
-            return Err(format!("unable to send message: {}", e))
+            return Err(KafkaError::DeliveryError(format!("{}", e)));
         };
         Ok(())
     })
