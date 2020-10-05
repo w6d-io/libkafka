@@ -33,8 +33,8 @@ impl Producer {
         }
     }
 
-    fn produce(&mut self, message: &str) -> PyResult<()> {
-        let res = self.p.produce(message);
+    fn produce(&mut self, py: Python, message: &str) -> PyResult<()> {
+        let res = py.allow_threads(move || self.p.produce(message));
         match res {
             Ok(()) => Ok(()),
             Err(err) => Err(PyOSError::new_err(err.to_string())),
@@ -61,8 +61,8 @@ impl Consumer {
         }
     }
 
-    fn consume(&mut self) -> PyResult<String> {
-        let res = self.c.consume();
+    fn consume(&mut self, py: Python) -> PyResult<String> {
+        let res = py.allow_threads(move || self.c.consume());
         match res {
             Ok(result) => Ok(result),
             Err(err) => Err(PyOSError::new_err(err.to_string())),
