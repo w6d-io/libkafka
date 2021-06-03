@@ -9,5 +9,5 @@ pub enum KafkaError {
     #[error("unable to send message: `{0}`")]
     DeliveryError(String),
     #[error(transparent)]
-    KafkaError(#[from] rdkafka::error::KafkaError)
+    KafkaError(#[from] rdkafka::error::KafkaError),
 }

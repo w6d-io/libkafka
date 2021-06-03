@@ -1,9 +1,10 @@
-use kafka::{KafkaProducer, KafkaConsumer};
-use rand::{thread_rng, Rng};
+use kafka::{KafkaConsumer, KafkaProducer};
 use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 
 fn get_random_string(len: usize) -> String {
-    thread_rng().sample_iter(&Alphanumeric).take(len).collect()
+    let vec = thread_rng().sample_iter(&Alphanumeric).take(len).collect();
+    String::from_utf8(vec).unwrap()
 }
 
 #[cfg(test)]
@@ -28,6 +29,6 @@ mod tests {
 
         // test consume
         assert_eq!(Ok(message.to_owned()), consumer.consume());
-        assert_eq!(Ok(message.to_owned()), consumer.consume());
+        assert_eq!(Ok(message), consumer.consume());
     }
 }

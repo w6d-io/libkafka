@@ -12,12 +12,9 @@ crate-type = ["cdylib", "lib"]
 python = ["pyo3"]
 
 [dependencies]
-rdkafka = { version = "0.24", features = ["cmake-build"] }
-tokio = { version = "0.2", features = ["full"] }
-futures = "0.3.0"
-smol = "1.1.0"
-pyo3 = { optional = true, version = "0.12.1", features = ["extension-module"] }
+rdkafka = { version = "0", features = ["cmake-build"] }
+pyo3 = { optional = true, version = "0", features = ["extension-module"] }
 thiserror = "1.0"
 
 [dev-dependencies]
-rand = "0.7"
+rand = "0"

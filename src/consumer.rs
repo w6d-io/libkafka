@@ -1,6 +1,8 @@
-use rdkafka::config::ClientConfig;
-use rdkafka::consumer::{Consumer, BaseConsumer};
-use rdkafka::message::Message;
+use rdkafka::{
+    config::ClientConfig,
+    consumer::{BaseConsumer, Consumer},
+    message::Message,
+};
 
 use crate::error::KafkaError;
 
@@ -12,8 +14,8 @@ pub struct KafkaConsumer {
 impl std::fmt::Debug for KafkaConsumer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Point")
-         .field("consumer", &"BaseConsumer".to_owned())
-         .finish()
+            .field("consumer", &"BaseConsumer".to_owned())
+            .finish()
     }
 }
 
@@ -29,7 +31,7 @@ impl KafkaConsumer {
             .create()?;
 
         consumer.subscribe(&[topic_name])?;
-        Ok(KafkaConsumer{consumer: consumer})
+        Ok(KafkaConsumer { consumer })
     }
 
     pub fn consume(&mut self) -> Result<String, KafkaError> {
@@ -42,13 +44,9 @@ impl KafkaConsumer {
                     Some(Err(e)) => format!("<invalid utf-8> {}", e),
                 };
                 Ok(msg)
-            },
-            Some(Err(e)) => {
-                Err(KafkaError::StreamError(format!("{}", e)))
-            },
-            None => {
-                Err(KafkaError::EmptyMsgError)
             }
+            Some(Err(e)) => Err(KafkaError::StreamError(format!("{}", e))),
+            None => Err(KafkaError::EmptyMsgError),
         }
     }
 }
