@@ -33,4 +33,8 @@ impl KafkaProducer {
         self.producer.flush(Duration::from_secs(10));
         Ok(())
     }
+
+    pub fn poll(&self) {
+        self.producer.poll(None);
+    }
 }
