@@ -6,15 +6,19 @@ edition = "2018"
 
 [lib]
 name = "kafka"
-crate-type = ["cdylib", "lib"]
-
-[features]
-python = ["pyo3"]
+crate-type = ["lib"]
 
 [dependencies]
 rdkafka = { version = "0", features = ["cmake-build"] }
-pyo3 = { optional = true, version = "0", features = ["extension-module"] }
 thiserror = "1.0"
+log = "0.4"
+tokio = { version = "1.17", features = ["rt-multi-thread"], optional = true}
 
 [dev-dependencies]
+tokio = { version = "1.17", features = ["rt-multi-thread", "macros"]}
 rand = "0"
+
+[features]
+default = []
+kafka_debug = []
+async = ["tokio"]

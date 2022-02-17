@@ -1,13 +1,17 @@
+use std::result;
+
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum KafkaError {
-    #[error("an error occurred while streaming kafka messages: `{0}`")]
-    StreamError(String),
-    #[error("consumer unexpectedly returned no messages")]
+    #[error("invalid utf8 encoding: {0}")]
+    Utf8FormatError(#[from] std::str::Utf8Error),
+    #[error("consumer unexpectedly returned an empty message")]
     EmptyMsgError,
     #[error("unable to send message: `{0}`")]
     DeliveryError(String),
     #[error(transparent)]
-    KafkaError(#[from] rdkafka::error::KafkaError),
+    RDKafkaError(#[from] rdkafka::error::KafkaError),
 }
+
+pub type Result<T, E = KafkaError> = result::Result<T, E>;

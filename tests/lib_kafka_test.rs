@@ -1,4 +1,4 @@
-use kafka::{KafkaConsumer, KafkaProducer};
+/* use kafka::{KafkaConsumer, KafkaProducer};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 
@@ -31,4 +31,4 @@ mod tests {
         assert_eq!(Ok(message.to_owned()), consumer.consume());
         assert_eq!(Ok(message), consumer.consume());
     }
-}
+} */
