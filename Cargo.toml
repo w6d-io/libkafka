@@ -9,16 +9,14 @@ name = "kafka"
 crate-type = ["lib"]
 
 [dependencies]
-rdkafka = { version = "0", features = ["cmake-build"] }
+rdkafka = { version = "0.28", features = ["cmake-build", "libz"], default-features = false }
 thiserror = "1.0"
 log = "0.4"
-tokio = { version = "1.17", features = ["rt-multi-thread"], optional = true}
 
 [dev-dependencies]
-tokio = { version = "1.17", features = ["rt-multi-thread", "macros"]}
-rand = "0"
+tokio = { version = "1.17", features = ["macros", "rt"]}
+rand = "0.8"
 
 [features]
-default = []
 kafka_debug = []
-async = ["tokio"]
+async = ["rdkafka/tokio"]
