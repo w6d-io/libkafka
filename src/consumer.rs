@@ -127,7 +127,7 @@ impl KafkaConsumer<StreamConsumer> {
         };
         let headers = match payload.headers(){
             None => None,
-            Some(h) => header_to_map(h)?,
+            Some(h) => Some(header_to_map(h)?),
         };
         Ok(KafkaMessage{message, headers, key})
     }
