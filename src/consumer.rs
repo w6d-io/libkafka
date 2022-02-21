@@ -5,7 +5,7 @@ use rdkafka::message::{OwnedMessage, Timestamp};
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
     consumer::Consumer,
-    message::Message,
+    message::{Message, Headers},
 };
 
 use crate::error::{KafkaError, Result};
@@ -19,6 +19,13 @@ use rdkafka::consumer::MessageStream;
 #[derive(Debug)]
 pub struct KafkaConsumer<T: Consumer> {
     consumer_type: T,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct KafkaMessage{
+    pub headers: Option<HashMap<String, String>>,
+    pub key: Option<String>,
+    pub message: String
 }
 
 ///Generate a simple config.
@@ -49,22 +56,46 @@ impl<T: Consumer + FromClientConfig> KafkaConsumer<T> {
     }
 }
 
+///convert kafka message headrs to a hashmap
+fn header_to_map<T: Headers>(headers: &T) -> Result<Option<HashMap<String, String>>>{
+    let size = headers.count();
+    let mut map = HashMap::new();
+    for i in 0..size {
+        if let Some((k,v)) = headers.get_as::<str>(i){
+            map.insert(k.to_owned(), v?.to_owned());
+        }
+    }
+    if map.is_empty(){
+        return Ok(None);
+    }
+    Ok(Some(map))
+}
+
 impl KafkaConsumer<BaseConsumer> {
     ///Extract a message frome a BaseConsume.
     ///If the timeout is none this function block until a message is received.
-    pub fn consume(&self, timeout: Option<Duration>) -> Result<Option<String>> {
+    pub fn consume(&self, timeout: Option<Duration>) -> Result<Option<KafkaMessage>> {
         let payload = match self.consumer_type.poll(timeout) {
             Some(Ok(p)) => p,
             Some(Err(e)) => return Err(KafkaError::RDKafkaError(e)),
             None => return Ok(None),
         };
 
-        let msg = match payload.payload_view::<str>() {
+        let message = match payload.payload_view::<str>() {
             None => return Err(KafkaError::EmptyMsgError),
             Some(Ok(s)) => s.to_owned(),
             Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
         };
-        Ok(Some(msg))
+        let key = match payload.key_view::<str>(){
+            None => None,
+            Some(Ok(k)) => Some(k.to_owned()),
+            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
+        };
+        let headers = match payload.headers(){
+            None => None,
+            Some(h) => header_to_map(h)?,
+        };
+        Ok(Some(KafkaMessage {message, headers, key}))
     }
 }
 
@@ -74,7 +105,7 @@ impl KafkaConsumer<StreamConsumer> {
     ///This function block until a message is received.
     ///If debug_kafka feature is enabled only return a debug message,
     ///only use this for testing purpose.
-    pub async fn consume(&self) -> Result<String> {
+    pub async fn consume(&self) -> Result<KafkaMessage> {
         #[cfg(not(any(feature = "kafka_debug", test)))]
         let payload = self.consumer_type.recv().await?;
         #[cfg(any(feature = "kafka_debug", test))]
@@ -87,12 +118,21 @@ impl KafkaConsumer<StreamConsumer> {
             1,
             None,
         );
-        let msg = match payload.payload_view::<str>() {
+        let message = match payload.payload_view::<str>() {
             None => return Err(KafkaError::EmptyMsgError),
             Some(Ok(s)) => s.to_owned(),
             Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
         };
-        Ok(msg)
+        let key = match payload.key_view::<str>(){
+            None => None,
+            Some(Ok(k)) => Some(k.to_owned()),
+            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
+        };
+        let headers = match payload.headers(){
+            None => None,
+            Some(h) => header_to_map(h)?,
+        };
+        Ok(KafkaMessage{message, headers, key})
     }
 
     ///Constructs a stream that yields messages from this consumer.
@@ -117,8 +157,8 @@ mod consumer_test {
     fn test_base_consumer_consume() {
         let consumer =
             KafkaConsumer::<BaseConsumer>::new(default_config("test", "test"), &["test"]).unwrap();
-        let msg = consumer.consume(Some(Duration::from_millis(0))).unwrap();
-        assert_eq!(msg, None);
+        let message = consumer.consume(Some(Duration::from_millis(0))).unwrap();
+        assert_eq!(message, None)
     }
 
     #[tokio::test]
@@ -131,8 +171,8 @@ mod consumer_test {
         let consumer =
             KafkaConsumer::<StreamConsumer>::new(default_config("test", "test"), &["test"])
                 .unwrap();
-        let msg = consumer.consume().await.unwrap();
-        assert_eq!(msg, "debug")
+        let message = consumer.consume().await.unwrap();
+        assert_eq!(message.message, "debug")
     }
     #[tokio::test]
     async fn test_stream_consumer_stream(){
