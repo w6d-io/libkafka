@@ -57,7 +57,7 @@ impl<T: Consumer + FromClientConfig> KafkaConsumer<T> {
 }
 
 ///convert kafka message headrs to a hashmap
-fn header_to_map<T: Headers>(headers: &T) -> Result<Option<HashMap<String, String>>>{
+fn header_to_map<T: Headers>(headers: &T) -> Result<HashMap<String, String>>{
     let size = headers.count();
     let mut map = HashMap::new();
     for i in 0..size {
@@ -65,10 +65,7 @@ fn header_to_map<T: Headers>(headers: &T) -> Result<Option<HashMap<String, Strin
             map.insert(k.to_owned(), v?.to_owned());
         }
     }
-    if map.is_empty(){
-        return Ok(None);
-    }
-    Ok(Some(map))
+    Ok(map)
 }
 
 impl KafkaConsumer<BaseConsumer> {
@@ -93,7 +90,7 @@ impl KafkaConsumer<BaseConsumer> {
         };
         let headers = match payload.headers(){
             None => None,
-            Some(h) => header_to_map(h)?,
+            Some(h) => Some(header_to_map(h)?),
         };
         Ok(Some(KafkaMessage {message, headers, key}))
     }
