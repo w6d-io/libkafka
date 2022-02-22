@@ -3,16 +3,15 @@ use std::{collections::HashMap, time::Duration};
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
     message::OwnedHeaders,
-    producer::{
-        BaseProducer, BaseRecord, DefaultProducerContext, Producer,
-        ThreadedProducer,
-    },
+    producer::{BaseRecord, DefaultProducerContext, Producer},
 };
 
 use crate::{
     error::{KafkaError, Result},
     KafkaMessage,
 };
+
+pub use rdkafka::producer::{BaseProducer, ThreadedProducer};
 
 pub type DefaultThreadedProducer = ThreadedProducer<DefaultProducerContext>;
 
@@ -77,11 +76,9 @@ impl KafkaProducer<DefaultThreadedProducer> {
         };
         Ok(())
     }
-
 }
 
 impl KafkaProducer<BaseProducer> {
-
     ///Put a new message in the producer memory buffer.
     ///poll must be called to send the message.
     pub fn produce(&self, message: KafkaMessage) -> Result<()> {
@@ -129,11 +126,7 @@ mod producer_test {
     }
     #[test]
     fn test_threaded_consumer_new() {
-        KafkaProducer::<DefaultThreadedProducer>::new(
-            &default_config("test"),
-            "test",
-        )
-        .unwrap();
+        KafkaProducer::<DefaultThreadedProducer>::new(&default_config("test"), "test").unwrap();
     }
 
     #[test]

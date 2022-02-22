@@ -1,7 +1,5 @@
 use std::{collections::HashMap, time::Duration};
 
-#[cfg(any(feature = "async", test))]
-use rdkafka::consumer::MessageStream;
 #[cfg(any(feature = "kafka_debug", test))]
 use rdkafka::message::{OwnedMessage, Timestamp};
 use rdkafka::{
@@ -109,50 +107,56 @@ impl KafkaConsumer<BaseConsumer> {
 }
 
 #[cfg(any(feature = "async", test))]
-impl KafkaConsumer<StreamConsumer> {
-    ///Extract a message frome a StreamConsumer.
-    ///This function block until a message is received.
-    ///If debug_kafka feature is enabled only return a debug message,
-    ///only use this for testing purpose.
-    pub async fn consume(&self) -> Result<KafkaMessage> {
-        #[cfg(not(any(feature = "kafka_debug", test)))]
-        let payload = self.consumer_type.recv().await?;
-        #[cfg(any(feature = "kafka_debug", test))]
-        let payload = OwnedMessage::new(
-            Some("debug".as_bytes().to_vec()),
-            None,
-            "debug".to_owned(),
-            Timestamp::NotAvailable,
-            1,
-            1,
-            None,
-        );
-        let message = match payload.payload_view::<str>() {
-            None => return Err(KafkaError::EmptyMsgError),
-            Some(Ok(s)) => s.to_owned(),
-            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
-        };
-        let key = match payload.key_view::<str>() {
-            None => None,
-            Some(Ok(k)) => Some(k.to_owned()),
-            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
-        };
-        let headers = match payload.headers() {
-            None => None,
-            Some(h) => Some(headers_to_map(h)?),
-        };
-        Ok(KafkaMessage {
-            message,
-            headers,
-            key,
-        })
-    }
+pub mod stream_consumer {
+    use rdkafka::consumer::MessageStream;
 
-    ///Constructs a stream that yields messages from this consumer.
-    ///To use this stream it is recomended to use a library that implements stream utilities
-    ///like futures or tokio_stream.
-    pub fn stream(&self) -> MessageStream<'_> {
-        self.consumer_type.stream()
+    use super::*;
+
+    impl KafkaConsumer<StreamConsumer> {
+        ///Extract a message frome a StreamConsumer.
+        ///This function block until a message is received.
+        ///If debug_kafka feature is enabled only return a debug message,
+        ///only use this for testing purpose.
+        pub async fn consume(&self) -> Result<KafkaMessage> {
+            #[cfg(not(any(feature = "kafka_debug", test)))]
+            let payload = self.consumer_type.recv().await?;
+            #[cfg(any(feature = "kafka_debug", test))]
+            let payload = OwnedMessage::new(
+                Some("debug".as_bytes().to_vec()),
+                None,
+                "debug".to_owned(),
+                Timestamp::NotAvailable,
+                1,
+                1,
+                None,
+            );
+            let message = match payload.payload_view::<str>() {
+                None => return Err(KafkaError::EmptyMsgError),
+                Some(Ok(s)) => s.to_owned(),
+                Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
+            };
+            let key = match payload.key_view::<str>() {
+                None => None,
+                Some(Ok(k)) => Some(k.to_owned()),
+                Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
+            };
+            let headers = match payload.headers() {
+                None => None,
+                Some(h) => Some(headers_to_map(h)?),
+            };
+            Ok(KafkaMessage {
+                message,
+                headers,
+                key,
+            })
+        }
+
+        ///Constructs a stream that yields messages from this consumer.
+        ///To use this stream it is recomended to use a library that implements stream utilities
+        ///like futures or tokio_stream.
+        pub fn stream(&self) -> MessageStream<'_> {
+            self.consumer_type.stream()
+        }
     }
 }
 
