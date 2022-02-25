@@ -37,7 +37,7 @@ pub fn default_config(broker: &str, group_id: &str) -> HashMap<String, String> {
 ///convert kafka message headers to a hashmap
 fn headers_to_map<T: Headers>(headers: &T) -> Result<HashMap<String, String>> {
     let size = headers.count();
-    let mut map = HashMap::new();
+    let mut map = HashMap::with_capacity(size);
     for i in 0..size {
         if let Some((k, v)) = headers.get_as::<str>(i) {
             map.insert(k.to_owned(), v?.to_owned());

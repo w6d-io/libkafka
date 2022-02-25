@@ -15,6 +15,7 @@ pub use rdkafka::producer::{BaseProducer, ThreadedProducer};
 
 pub type DefaultThreadedProducer = ThreadedProducer<DefaultProducerContext>;
 
+///Struct containin the producer data.
 pub struct KafkaProducer<T: Producer> {
     producer_type: T,
     topic: String,
@@ -28,7 +29,7 @@ pub fn default_config(broker: &str) -> HashMap<String, String> {
     ])
 }
 
-///convert hasmap to kafka message headers
+///Convert hasmap to kafka message headers.
 fn map_to_header(map: HashMap<String, String>) -> OwnedHeaders {
     map.iter()
         .fold(OwnedHeaders::new(), |headers, (k, v)| headers.add(k, v))
@@ -38,6 +39,7 @@ impl<T> KafkaProducer<T>
 where
     T: Producer + FromClientConfig,
 {
+    ///Create a new producer from the given config and topic name.
     pub fn new(config: &HashMap<String, String>, topic_name: &str) -> Result<KafkaProducer<T>> {
         let mut client_config = ClientConfig::new();
         for (opt, val) in config.iter() {
@@ -212,7 +214,33 @@ pub mod future_producer {
 
 #[cfg(test)]
 mod producer_test {
+    use rdkafka::message::Headers;
+
     use super::*;
+
+    #[test]
+    fn test_map_to_header() {
+        let expected = OwnedHeaders::new()
+            .add("test", "test")
+            .add("test2", "test2");
+        let input = HashMap::from([
+            ("test".to_owned(), "test".to_owned()),
+            ("test2".to_owned(), "test2".to_owned()),
+        ]);
+        let headers = map_to_header(input);
+        let mut map = HashMap::new();
+        let mut expected_map = HashMap::new();
+        for i in 0..headers.count() {
+            if let Some((k, v)) = headers.get_as::<str>(i) {
+                map.insert(k, v.unwrap());
+            }
+            if let Some((k, v)) = expected.get_as::<str>(i) {
+                expected_map.insert(k, v.unwrap());
+            }
+        }
+        assert_eq!(map, expected_map);
+    }
+
     #[test]
     fn test_base_consumer_new() {
         KafkaProducer::<BaseProducer>::new(&default_config("test"), "test").unwrap();
