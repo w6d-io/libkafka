@@ -104,6 +104,111 @@ impl KafkaProducer<BaseProducer> {
         self.producer_type.poll(timeout)
     }
 }
+/* #[cfg(any(feature = "async", test))]
+pub mod future_producer {
+    use super::*;
+    use rdkafka::{
+        client::Client,
+        message::ToBytes,
+        producer::{
+            future_producer::{FutureProducerContext, OwnedDeliveryResult},
+            FutureProducer, FutureRecord,
+        },
+        util::Timeout,
+    };
+
+    pub struct DefaultFutureProducer(FutureProducer<FutureProducerContext<DefaultProducerContext>>);
+
+    impl DefaultFutureProducer {
+        pub async fn send<K, P, T>(
+            &self,
+            record: FutureRecord<'_, K, P>,
+            queue_timeout: T,
+        ) -> OwnedDeliveryResult
+        where
+            K: ToBytes + ?Sized,
+            P: ToBytes + ?Sized,
+            T: Into<Timeout>,
+        {
+            self.0.send(record, queue_timeout).await
+        }
+    }
+
+    impl<T> Producer for DefaultFutureProducer where rdkafka::util::Timeout: std::convert::From<T> {
+        fn client(&self) -> &Client<DefaultProducerContext> {
+            self.0.client()
+        }
+        fn in_flight_count(&self) -> i32 {
+            self.0.in_flight_count()
+        }
+        fn flush(&self, timeout: T)
+        {
+            self.0.flush(timeout)
+        }
+
+        fn init_transactions(
+            &self,
+            timeout: T,
+        ) -> rdkafka::error::KafkaResult<()> {
+            self.0.init_transactions(timeout)
+        }
+
+        fn begin_transaction(&self) -> rdkafka::error::KafkaResult<()> {
+            self.0.begin_transaction()
+        }
+
+        fn send_offsets_to_transaction(
+            &self,
+            offsets: &rdkafka::TopicPartitionList,
+            cgm: &rdkafka::consumer::ConsumerGroupMetadata,
+            timeout: T,
+        ) -> rdkafka::error::KafkaResult<()> {
+            self.0.send_offsets_to_transaction(offsets, cgm, timeout)
+        }
+
+        fn commit_transaction(
+            &self,
+            timeout: T,
+        ) -> rdkafka::error::KafkaResult<()> {
+            self.0.commit_transaction(timeout)
+        }
+
+        fn abort_transaction(
+            &self,
+            timeout: T,
+        ) -> rdkafka::error::KafkaResult<()> {
+            self.0.abort_transaction(timeout)
+        }
+
+        fn context(&self) -> &std::sync::Arc<FutureProducerContext<DefaultProducerContext>> {
+            self.client().context()
+        }
+    }
+
+    impl DefaultFutureProducer {
+        ///Put a new message in the producer memory buffer.
+        ///As this producer is threaded it is automaticaly polled.
+        pub async fn produce(
+            &self,
+            message: KafkaMessage,
+            timeout: Option<Duration>,
+        ) -> Result<()> {
+            let mut payload: FutureRecord<str, str> =
+                FutureRecord::to(&self.topic).payload(&message.message);
+            if let Some(key) = &message.key {
+                payload = payload.key(key);
+            }
+            if let Some(headers) = message.headers {
+                payload = payload.headers(map_to_header(headers));
+            }
+            let delivery_status = self.producer_type.send(payload, timeout).await;
+            if let Err((e, _)) = delivery_status {
+                return Err(KafkaError::DeliveryError(format!("{}", e)));
+            };
+            Ok(())
+        }
+    }
+} */
 
 #[cfg(test)]
 mod producer_test {
