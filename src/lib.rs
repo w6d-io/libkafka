@@ -11,5 +11,5 @@ pub use producer::KafkaProducer;
 pub struct KafkaMessage {
     pub headers: Option<HashMap<String, String>>,
     pub key: Option<String>,
-    pub message: String,
+    pub payload: String,
 }
