@@ -106,7 +106,9 @@ impl KafkaConsumer<BaseConsumer> {
 }
 
 #[cfg(any(feature = "async", test))]
-use rdkafka::consumer::{MessageStream, StreamConsumer};
+use rdkafka::consumer::MessageStream;
+#[cfg(any(feature = "async", test))]
+pub use rdkafka::consumer::StreamConsumer;
 
 #[cfg(any(feature = "async", test))]
 impl KafkaConsumer<StreamConsumer> {
