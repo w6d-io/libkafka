@@ -65,7 +65,7 @@ impl KafkaProducer<DefaultThreadedProducer> {
     ///As this producer is threaded it is automaticaly polled.
     pub fn produce(&self, message: KafkaMessage) -> Result<()> {
         let mut payload: BaseRecord<str, str> =
-            BaseRecord::to(&self.topic).payload(&message.message);
+            BaseRecord::to(&self.topic).payload(&message.payload);
         if let Some(key) = &message.key {
             payload = payload.key(key);
         }
@@ -85,7 +85,7 @@ impl KafkaProducer<BaseProducer> {
     ///poll must be called to send the message.
     pub fn produce(&self, message: KafkaMessage) -> Result<()> {
         let mut payload: BaseRecord<str, str> =
-            BaseRecord::to(&self.topic).payload(&message.message);
+            BaseRecord::to(&self.topic).payload(&message.payload);
         if let Some(key) = &message.key {
             payload = payload.key(key);
         }
@@ -248,7 +248,7 @@ mod producer_test {
     #[test]
     fn test_base_consumer_produce() {
         let message = KafkaMessage {
-            message: "test".to_owned(),
+            payload: "test".to_owned(),
             key: None,
             headers: None,
         };
@@ -265,7 +265,7 @@ mod producer_test {
     #[test]
     fn test_threaded_consumer_produce() {
         let message = KafkaMessage {
-            message: "test".to_owned(),
+            payload: "test".to_owned(),
             key: None,
             headers: None,
         };

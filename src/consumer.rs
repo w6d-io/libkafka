@@ -98,7 +98,7 @@ impl KafkaConsumer<BaseConsumer> {
             Some(h) => Some(headers_to_map(h)?),
         };
         Ok(Some(KafkaMessage {
-            message,
+            payload: message,
             headers,
             key,
         }))
@@ -144,7 +144,7 @@ impl KafkaConsumer<StreamConsumer> {
             Some(h) => Some(headers_to_map(h)?),
         };
         Ok(KafkaMessage {
-            message,
+            payload: message,
             headers,
             key,
         })
@@ -188,7 +188,7 @@ mod consumer_test {
         let expected = KafkaMessage {
             headers: None,
             key: None,
-            message: "debug".to_owned(),
+            payload: "debug".to_owned(),
         };
         let consumer: KafkaConsumer<BaseConsumer> =
             KafkaConsumer::new(&default_config("test", "test"), &["test"]).unwrap();
@@ -206,7 +206,7 @@ mod consumer_test {
         let expected = KafkaMessage {
             headers: None,
             key: None,
-            message: "debug".to_owned(),
+            payload: "debug".to_owned(),
         };
         let consumer: KafkaConsumer<StreamConsumer> =
             KafkaConsumer::new(&default_config("test", "test"), &["test"]).unwrap();
