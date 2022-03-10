@@ -2,12 +2,12 @@ use std::{collections::HashMap, time::Duration};
 
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
-    message::OwnedHeaders,
     producer::{BaseRecord, DefaultProducerContext, Producer},
 };
 
 use crate::{
     error::{KafkaError, Result},
+    utils::map_to_header,
     KafkaMessage,
 };
 
@@ -29,10 +29,15 @@ pub fn default_config(broker: &str) -> HashMap<String, String> {
     ])
 }
 
-///Convert hasmap to kafka message headers.
-fn map_to_header(map: HashMap<String, String>) -> OwnedHeaders {
-    map.iter()
-        .fold(OwnedHeaders::new(), |headers, (k, v)| headers.add(k, v))
+fn generate_message<'a>(data: &'a KafkaMessage, topic: &'a str) -> BaseRecord<'a, str, str> {
+    let mut message: BaseRecord<str, str> = BaseRecord::to(topic).payload(&data.payload);
+    if let Some(key) = &data.key {
+        message = message.key(key);
+    }
+    if let Some(headers) = &data.headers {
+        message = message.headers(map_to_header(headers));
+    }
+    message
 }
 
 impl<T> KafkaProducer<T>
@@ -63,16 +68,9 @@ where
 impl KafkaProducer<DefaultThreadedProducer> {
     ///Put a new message in the producer memory buffer.
     ///As this producer is threaded it is automaticaly polled.
-    pub fn produce(&self, message: KafkaMessage) -> Result<()> {
-        let mut payload: BaseRecord<str, str> =
-            BaseRecord::to(&self.topic).payload(&message.payload);
-        if let Some(key) = &message.key {
-            payload = payload.key(key);
-        }
-        if let Some(headers) = message.headers {
-            payload = payload.headers(map_to_header(headers));
-        }
-        let delivery_status = self.producer_type.send(payload);
+    pub fn produce(&self, data: KafkaMessage) -> Result<()> {
+        let message = generate_message(&data, &self.topic);
+        let delivery_status = self.producer_type.send(message);
         if let Err((e, _)) = delivery_status {
             return Err(KafkaError::DeliveryError(format!("{}", e)));
         };
@@ -83,16 +81,9 @@ impl KafkaProducer<DefaultThreadedProducer> {
 impl KafkaProducer<BaseProducer> {
     ///Put a new message in the producer memory buffer.
     ///poll must be called to send the message.
-    pub fn produce(&self, message: KafkaMessage) -> Result<()> {
-        let mut payload: BaseRecord<str, str> =
-            BaseRecord::to(&self.topic).payload(&message.payload);
-        if let Some(key) = &message.key {
-            payload = payload.key(key);
-        }
-        if let Some(headers) = message.headers {
-            payload = payload.headers(map_to_header(headers));
-        }
-        let delivery_status = self.producer_type.send(payload);
+    pub fn produce(&self, data: KafkaMessage) -> Result<()> {
+        let message = generate_message(&data, &self.topic);
+        let delivery_status = self.producer_type.send(message);
         if let Err((e, _)) = delivery_status {
             return Err(KafkaError::DeliveryError(format!("{}", e)));
         };
@@ -214,32 +205,7 @@ pub mod future_producer {
 
 #[cfg(test)]
 mod producer_test {
-    use rdkafka::message::Headers;
-
     use super::*;
-
-    #[test]
-    fn test_map_to_header() {
-        let expected = OwnedHeaders::new()
-            .add("test", "test")
-            .add("test2", "test2");
-        let input = HashMap::from([
-            ("test".to_owned(), "test".to_owned()),
-            ("test2".to_owned(), "test2".to_owned()),
-        ]);
-        let headers = map_to_header(input);
-        let mut map = HashMap::new();
-        let mut expected_map = HashMap::new();
-        for i in 0..headers.count() {
-            if let Some((k, v)) = headers.get_as::<str>(i) {
-                map.insert(k, v.unwrap());
-            }
-            if let Some((k, v)) = expected.get_as::<str>(i) {
-                expected_map.insert(k, v.unwrap());
-            }
-        }
-        assert_eq!(map, expected_map);
-    }
 
     #[test]
     fn test_base_consumer_new() {

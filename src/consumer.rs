@@ -5,16 +5,16 @@ use rdkafka::message::{OwnedMessage, Timestamp};
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
     consumer::Consumer,
-    message::{Headers, Message},
 };
 
+#[allow(unused_imports)]
 use crate::{
     error::{KafkaError, Result},
+    utils::extract_message,
     KafkaMessage,
 };
 
 pub use rdkafka::consumer::BaseConsumer;
-
 
 #[derive(Debug)]
 pub struct KafkaConsumer<T: Consumer> {
@@ -31,18 +31,6 @@ pub fn default_config(broker: &str, group_id: &str) -> HashMap<String, String> {
         ("auto.offset.reset".to_owned(), "earliest".to_owned()),
         ("group.id".to_owned(), format!("{group_id}_ID")),
     ])
-}
-
-///convert kafka message headers to a hashmap
-fn headers_to_map<T: Headers>(headers: &T) -> Result<HashMap<String, String>> {
-    let size = headers.count();
-    let mut map = HashMap::with_capacity(size);
-    for i in 0..size {
-        if let Some((k, v)) = headers.get_as::<str>(i) {
-            map.insert(k.to_owned(), v?.to_owned());
-        }
-    }
-    Ok(map)
 }
 
 impl<T: Consumer + FromClientConfig> KafkaConsumer<T> {
@@ -67,13 +55,13 @@ impl KafkaConsumer<BaseConsumer> {
     #[allow(unused_variables)]
     pub fn consume(&self, timeout: Option<Duration>) -> Result<Option<KafkaMessage>> {
         #[cfg(not(any(feature = "kafka_debug", test)))]
-        let payload = match self.consumer_type.poll(timeout) {
+        let message = match self.consumer_type.poll(timeout) {
             Some(Ok(p)) => p,
             Some(Err(e)) => return Err(KafkaError::RDKafkaError(e)),
             None => return Ok(None),
         };
         #[cfg(any(feature = "kafka_debug", test))]
-        let payload = OwnedMessage::new(
+        let message = OwnedMessage::new(
             Some("debug".as_bytes().to_vec()),
             None,
             "debug".to_owned(),
@@ -82,26 +70,8 @@ impl KafkaConsumer<BaseConsumer> {
             1,
             None,
         );
-
-        let message = match payload.payload_view::<str>() {
-            None => return Err(KafkaError::EmptyMsgError),
-            Some(Ok(s)) => s.to_owned(),
-            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
-        };
-        let key = match payload.key_view::<str>() {
-            None => None,
-            Some(Ok(k)) => Some(k.to_owned()),
-            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
-        };
-        let headers = match payload.headers() {
-            None => None,
-            Some(h) => Some(headers_to_map(h)?),
-        };
-        Ok(Some(KafkaMessage {
-            payload: message,
-            headers,
-            key,
-        }))
+        let ret = extract_message(message)?;
+        Ok(Some(ret))
     }
 }
 
@@ -118,9 +88,9 @@ impl KafkaConsumer<StreamConsumer> {
     ///only use this for testing purpose.
     pub async fn consume(&self) -> Result<KafkaMessage> {
         #[cfg(not(any(feature = "kafka_debug", test)))]
-        let payload = self.consumer_type.recv().await?;
+        let message = self.consumer_type.recv().await?;
         #[cfg(any(feature = "kafka_debug", test))]
-        let payload = OwnedMessage::new(
+        let message = OwnedMessage::new(
             Some("debug".as_bytes().to_vec()),
             None,
             "debug".to_owned(),
@@ -128,26 +98,8 @@ impl KafkaConsumer<StreamConsumer> {
             1,
             1,
             None,
-            );
-        let message = match payload.payload_view::<str>() {
-            None => return Err(KafkaError::EmptyMsgError),
-            Some(Ok(s)) => s.to_owned(),
-            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
-        };
-        let key = match payload.key_view::<str>() {
-            None => None,
-            Some(Ok(k)) => Some(k.to_owned()),
-            Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
-        };
-        let headers = match payload.headers() {
-            None => None,
-            Some(h) => Some(headers_to_map(h)?),
-        };
-        Ok(KafkaMessage {
-            payload: message,
-            headers,
-            key,
-        })
+        );
+        extract_message(message)
     }
 
     ///Constructs a stream that yields messages from this consumer.
@@ -160,23 +112,9 @@ impl KafkaConsumer<StreamConsumer> {
 
 #[cfg(test)]
 mod consumer_test {
-    use rdkafka::{consumer::StreamConsumer, message::OwnedHeaders};
+    use rdkafka::consumer::StreamConsumer;
 
     use super::*;
-
-    #[test]
-    fn test_headers_to_map() {
-        let headers = OwnedHeaders::new()
-            .add("test1", "test1")
-            .add("test2", "test2");
-
-        let expected = HashMap::from([
-            ("test1".to_owned(), "test1".to_owned()),
-            ("test2".to_owned(), "test2".to_owned()),
-        ]);
-        let map = headers_to_map(&headers).unwrap();
-        assert_eq!(map, expected);
-    }
 
     #[test]
     fn test_base_consumer_new() {

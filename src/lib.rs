@@ -1,6 +1,7 @@
 pub mod consumer;
 pub mod error;
 pub mod producer;
+pub mod utils;
 
 use std::collections::HashMap;
 
