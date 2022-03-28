@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use rdkafka::message::{Headers, Message, OwnedHeaders};
+use rdkafka::message::{Headers, OwnedHeaders};
 
 use crate::{
     error::{KafkaError, Result},
     KafkaMessage,
 };
+
+pub use rdkafka::message::Message;
 
 ///convert kafka message headers to a hashmap
 pub fn headers_to_map<T: Headers>(headers: &T) -> Result<HashMap<String, String>> {
