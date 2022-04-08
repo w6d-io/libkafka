@@ -36,13 +36,15 @@ pub fn default_config(broker: &str, group_id: &str) -> HashMap<String, String> {
 impl<T: Consumer + FromClientConfig> KafkaConsumer<T> {
     /// Initialise a new consumer with the given config and subscribe it to the given topics.
     #[allow(unused_variables)]
-    pub fn new(config: &HashMap<String, String>, topics_name: &[&str]) -> Result<Self> {
+    pub fn new<S: AsRef<str>>(config: &HashMap<String, String>, topics_name: &[S]) -> Result<Self>
+    {
         let mut client_config = ClientConfig::new();
         for (opt, val) in config.iter() {
             client_config.set(opt, val);
         }
         let consumer: T = client_config.create()?;
-        consumer.subscribe(topics_name)?;
+        let topic_slice: Vec<&str> = topics_name.iter().map(|v| v.as_ref()).collect();
+        consumer.subscribe(&topic_slice)?;
         Ok(KafkaConsumer {
             consumer_type: consumer,
         })
