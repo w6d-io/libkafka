@@ -14,4 +14,8 @@ pub enum KafkaError {
     RDKafkaError(#[from] rdkafka::error::KafkaError),
 }
 
+#[cfg(not(anyhow))]
 pub type Result<T, E = KafkaError> = result::Result<T, E>;
+
+#[cfg(anyhow)]
+pub type Result  = anyhow::Result<T>;

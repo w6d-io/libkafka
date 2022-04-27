@@ -13,6 +13,7 @@ rdkafka = { version = "0.28", features = ["cmake-build", "libz"], default-featur
 thiserror = "1.0"
 log = "0.4"
 futures-util= "0.3"
+anyhow = { version = "1.0.57", optional = true}
 
 [dev-dependencies]
 tokio = { version = "1.17", features = ["macros", "rt"]}
@@ -21,3 +22,4 @@ rand = "0.8"
 [features]
 kafka_debug = []
 async = ["rdkafka/tokio"]
+anyhow = ["dep:anyhow"]
