@@ -27,7 +27,7 @@ pub fn map_to_header(map: &HashMap<String, String>) -> OwnedHeaders {
         .fold(OwnedHeaders::new(), |headers, (k, v)| headers.add(k, v))
 }
 
-///extarct payload, header and key from a struct implemeting the Message trait
+///extract payload, header and key from a struct implementing the Message trait
 pub fn extract_message<T: Message>(message: T) -> Result<KafkaMessage> {
     let payload = match message.payload_view::<str>() {
         None => return Err(KafkaError::EmptyMsgError),
