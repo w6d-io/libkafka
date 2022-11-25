@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rdkafka::message::{Headers, OwnedHeaders};
 
 use crate::{
-    error::{KafkaError, Result},
+    error::{LibKafkaError, Result},
     KafkaMessage,
 };
 
@@ -30,14 +30,14 @@ pub fn map_to_header(map: &HashMap<String, String>) -> OwnedHeaders {
 ///extract payload, header and key from a struct implementing the Message trait
 pub fn extract_message<T: Message>(message: T) -> Result<KafkaMessage> {
     let payload = match message.payload_view::<str>() {
-        None => return Err(KafkaError::EmptyMsgError),
+        None => return Err(LibKafkaError::EmptyMsgError),
         Some(Ok(s)) => s.to_owned(),
-        Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
+        Some(Err(e)) => return Err(LibKafkaError::Utf8FormatError(e)),
     };
     let key = match message.key_view::<str>() {
         None => None,
         Some(Ok(k)) => Some(k.to_owned()),
-        Some(Err(e)) => return Err(KafkaError::Utf8FormatError(e)),
+        Some(Err(e)) => return Err(LibKafkaError::Utf8FormatError(e)),
     };
     let headers = match message.headers() {
         None => None,

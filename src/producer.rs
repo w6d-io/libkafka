@@ -6,7 +6,7 @@ use rdkafka::{
 };
 
 use crate::{
-    error::{KafkaError, Result},
+    error::{LibKafkaError, Result},
     utils::map_to_header,
     KafkaMessage,
 };
@@ -72,7 +72,7 @@ impl KafkaProducer<DefaultThreadedProducer> {
         let message = generate_message(&data, &self.topic);
         let delivery_status = self.producer_type.send(message);
         if let Err((e, _)) = delivery_status {
-            return Err(KafkaError::DeliveryError(format!("{}", e)));
+            return Err(LibKafkaError::DeliveryError(format!("{}", e)));
         };
         Ok(())
     }
@@ -85,7 +85,7 @@ impl KafkaProducer<BaseProducer> {
         let message = generate_message(&data, &self.topic);
         let delivery_status = self.producer_type.send(message);
         if let Err((e, _)) = delivery_status {
-            return Err(KafkaError::DeliveryError(format!("{}", e)));
+            return Err(LibKafkaError::DeliveryError(format!("{}", e)));
         };
         Ok(())
     }

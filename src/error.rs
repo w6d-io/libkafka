@@ -1,9 +1,11 @@
 use std::result;
+pub use rdkafka::error::KafkaError;
 
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
-pub enum KafkaError {
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum LibKafkaError {
     #[error("invalid utf8 encoding: {0}")]
     Utf8FormatError(#[from] std::str::Utf8Error),
     #[error("consumer unexpectedly returned an empty message")]
@@ -15,7 +17,7 @@ pub enum KafkaError {
 }
 
 #[cfg(not(anyhow))]
-pub type Result<T, E = KafkaError> = result::Result<T, E>;
+pub type Result<T, E = LibKafkaError> = result::Result<T, E>;
 
 #[cfg(anyhow)]
 pub type Result  = anyhow::Result<T>;

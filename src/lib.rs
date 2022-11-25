@@ -8,7 +8,7 @@ use std::collections::HashMap;
 pub use consumer::KafkaConsumer;
 pub use producer::KafkaProducer;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct KafkaMessage {
     pub headers: Option<HashMap<String, String>>,
     pub key: Option<String>,

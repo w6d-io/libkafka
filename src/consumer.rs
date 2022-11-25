@@ -9,7 +9,7 @@ use rdkafka::{
 
 #[allow(unused_imports)]
 use crate::{
-    error::{KafkaError, Result},
+    error::{LibKafkaError, Result},
     utils::extract_message,
     KafkaMessage,
 };
@@ -59,7 +59,7 @@ impl KafkaConsumer<BaseConsumer> {
         #[cfg(not(any(feature = "kafka_debug", test)))]
         let message = match self.consumer_type.poll(timeout) {
             Some(Ok(p)) => p,
-            Some(Err(e)) => return Err(KafkaError::RDKafkaError(e)),
+            Some(Err(e)) => return Err(LibKafkaError::RDKafkaError(e)),
             None => return Ok(None),
         };
         #[cfg(any(feature = "kafka_debug", test))]
