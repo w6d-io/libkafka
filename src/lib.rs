@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 pub use consumer::KafkaConsumer;
 pub use producer::KafkaProducer;
-pub use rdkafka::message;
+pub use rdkafka;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct KafkaMessage {

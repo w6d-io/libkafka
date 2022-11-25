@@ -1,8 +1,5 @@
 use std::result;
-pub use rdkafka::error::KafkaError;
-
 use thiserror::Error;
-
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum LibKafkaError {
