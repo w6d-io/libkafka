@@ -1,6 +1,6 @@
 # libkafka
 
-Easy as pie rust lib for Kafka with python bindings.
+Easy as pie rust lib for Kafka.
 
 <!-- ![](./libkafka.jpg) -->
 
@@ -12,7 +12,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-libkafka = { git = "https://gitlab.w6d.io/w6d/ia/ml/libkafka.git" }
+libkafka = { git = "https://github.com/w6d-io/libkafka" branch = "develop"}
 ```
 
 Add this to your `.cargo/config`
@@ -21,12 +21,7 @@ Add this to your `.cargo/config`
 [net]
 git-fetch-with-cli = true
 ```
-
-```bash
-cargo build --release
-ls ./target/release/libkafka.rlib
-```
-
+todo: update exemple 
 ```rust
 use kafka::{KafkaProducer, KafkaConsumer};
 
@@ -38,29 +33,6 @@ producer.produce(broker, "KAFKA_TOPIC", "message").unwrap();
 let mut consumer = KafkaConsumer::new(broker, "KAFKA_TOPIC").unwrap();
 let message = consumer.consume().unwrap();
 ```
-
-## Build for python
-
-Build and rename from `libkafka.dylib` to `kafka.so` (renaming is important)
-```bash
-cargo build --release --features "python"
-cp ./target/release/libkafka.dylib kafka.so
-```
-
-Then simply copy the `kafka.so` file to the root of your python project and simply :
-
-```python
-from kafka import Producer, Consumer
-
-broker = "localhost:9092"
-
-producer = Producer(broker, "KAFKA_TOPIC")
-producer.produce("message")
-
-consumer = Consumer(broker, "KAFKA_TOPIC")
-message = consumer.consume()
-```
-
 ## Refs
 
 * [rdkafka](https://github.com/fede1024/rust-rdkafka)
