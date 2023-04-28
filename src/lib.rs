@@ -9,6 +9,7 @@ pub use consumer::KafkaConsumer;
 pub use producer::KafkaProducer;
 pub use rdkafka;
 
+//todo:update to rdkafka 0.29+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct KafkaMessage {
     pub headers: Option<HashMap<String, String>>,
