@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, time::Duration, sync::Arc};
 
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
@@ -16,6 +16,7 @@ pub use rdkafka::producer::{BaseProducer, ThreadedProducer};
 pub type DefaultThreadedProducer = ThreadedProducer<DefaultProducerContext>;
 
 ///Struct containin the producer data.
+#[derive(Clone)]
 pub struct KafkaProducer<T: Producer> {
     producer_type: T,
     topic: String,

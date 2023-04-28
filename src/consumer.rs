@@ -16,7 +16,7 @@ use crate::{
 
 pub use rdkafka::consumer::BaseConsumer;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct KafkaConsumer<T: Consumer> {
     consumer_type: T,
 }
