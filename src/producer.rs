@@ -113,6 +113,8 @@ pub mod future_producer {
         producer::{future_producer::FutureProducerContext, FutureProducer, FutureRecord},
     };
 
+    pub type DefaultFutureContext = FutureProducerContext<DefaultClientContext>;
+
     fn generate_future_message<'a>(
         data: &'a KafkaMessage,
         topic: &'a str,
