@@ -11,7 +11,7 @@ use crate::{
     KafkaMessage,
 };
 
-pub use rdkafka::producer::{BaseProducer, ThreadedProducer, FutureProducer};
+pub use rdkafka::producer::{BaseProducer, FutureProducer, ThreadedProducer};
 
 pub type DefaultThreadedProducer = ThreadedProducer<DefaultProducerContext>;
 
