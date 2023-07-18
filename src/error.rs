@@ -7,8 +7,6 @@ pub enum LibKafkaError {
     Utf8FormatError(#[from] std::str::Utf8Error),
     #[error("consumer unexpectedly returned an empty message")]
     EmptyMsgError,
-    #[error("unable to send message: `{0}`")]
-    DeliveryError(String),
     #[error(transparent)]
     RDKafkaError(#[from] rdkafka::error::KafkaError),
 }
@@ -17,4 +15,4 @@ pub enum LibKafkaError {
 pub type Result<T, E = LibKafkaError> = result::Result<T, E>;
 
 #[cfg(anyhow)]
-pub type Result  = anyhow::Result<T>;
+pub type Result = anyhow::Result<T>;

@@ -1,8 +1,8 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, marker::PhantomData, time::Duration};
 
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
-    producer::{BaseRecord, DefaultProducerContext, Producer},
+    producer::{BaseRecord, DefaultProducerContext, Producer, ProducerContext},
 };
 
 use crate::{
@@ -11,12 +11,18 @@ use crate::{
     KafkaMessage,
 };
 
-pub use rdkafka::producer::{BaseProducer, ThreadedProducer};
+pub use rdkafka::producer::{BaseProducer, FutureProducer, ThreadedProducer};
 
 pub type DefaultThreadedProducer = ThreadedProducer<DefaultProducerContext>;
 
 ///Struct containin the producer data.
-pub struct KafkaProducer<T: Producer> {
+#[derive(Clone)]
+pub struct KafkaProducer<T, C = DefaultProducerContext>
+where
+    C: ProducerContext,
+    T: Producer<C>,
+{
+    _producer_context: PhantomData<C>,
     producer_type: T,
     topic: String,
 }
@@ -29,7 +35,7 @@ pub fn default_config(broker: &str) -> HashMap<String, String> {
     ])
 }
 
-fn generate_message<'a>(data: &'a KafkaMessage, topic: &'a str) -> BaseRecord<'a, str, str> {
+fn generate_base_message<'a>(data: &'a KafkaMessage, topic: &'a str) -> BaseRecord<'a, str, str> {
     let mut message: BaseRecord<str, str> = BaseRecord::to(topic).payload(&data.payload);
     if let Some(key) = &data.key {
         message = message.key(key);
@@ -40,18 +46,20 @@ fn generate_message<'a>(data: &'a KafkaMessage, topic: &'a str) -> BaseRecord<'a
     message
 }
 
-impl<T> KafkaProducer<T>
+impl<C, T> KafkaProducer<T, C>
 where
-    T: Producer + FromClientConfig,
+    T: Producer<C> + FromClientConfig,
+    C: ProducerContext,
 {
     ///Create a new producer from the given config and topic name.
-    pub fn new(config: &HashMap<String, String>, topic_name: &str) -> Result<KafkaProducer<T>> {
+    pub fn new(config: &HashMap<String, String>, topic_name: &str) -> Result<KafkaProducer<T, C>> {
         let mut client_config = ClientConfig::new();
         for (opt, val) in config.iter() {
             client_config.set(opt, val);
         }
         let producer: T = client_config.create()?;
         Ok(KafkaProducer {
+            _producer_context: PhantomData,
             producer_type: producer,
             topic: topic_name.to_owned(),
         })
@@ -69,10 +77,10 @@ impl KafkaProducer<DefaultThreadedProducer> {
     ///Put a new message in the producer memory buffer.
     ///As this producer is threaded it is automaticaly polled.
     pub fn produce(&self, data: KafkaMessage) -> Result<()> {
-        let message = generate_message(&data, &self.topic);
+        let message = generate_base_message(&data, &self.topic);
         let delivery_status = self.producer_type.send(message);
         if let Err((e, _)) = delivery_status {
-            return Err(LibKafkaError::DeliveryError(format!("{}", e)));
+            return Err(LibKafkaError::RDKafkaError(e));
         };
         Ok(())
     }
@@ -82,10 +90,10 @@ impl KafkaProducer<BaseProducer> {
     ///Put a new message in the producer memory buffer.
     ///poll must be called to send the message.
     pub fn produce(&self, data: KafkaMessage) -> Result<()> {
-        let message = generate_message(&data, &self.topic);
+        let message = generate_base_message(&data, &self.topic);
         let delivery_status = self.producer_type.send(message);
         if let Err((e, _)) = delivery_status {
-            return Err(LibKafkaError::DeliveryError(format!("{}", e)));
+            return Err(LibKafkaError::RDKafkaError(e));
         };
         Ok(())
     }
@@ -97,111 +105,43 @@ impl KafkaProducer<BaseProducer> {
         self.producer_type.poll(timeout)
     }
 }
-/* #[cfg(any(feature = "async", test))]
+#[cfg(any(feature = "async", test))]
 pub mod future_producer {
     use super::*;
     use rdkafka::{
-        client::Client,
-        message::ToBytes,
-        producer::{
-            future_producer::{FutureProducerContext, OwnedDeliveryResult},
-            FutureProducer, FutureRecord,
-        },
-        util::Timeout,
+        client::DefaultClientContext,
+        producer::{future_producer::FutureProducerContext, FutureProducer, FutureRecord},
     };
 
-    pub struct DefaultFutureProducer(FutureProducer<FutureProducerContext<DefaultProducerContext>>);
+    pub type DefaultFutureContext = FutureProducerContext<DefaultClientContext>;
 
-    impl DefaultFutureProducer {
-        pub async fn send<K, P, T>(
-            &self,
-            record: FutureRecord<'_, K, P>,
-            queue_timeout: T,
-        ) -> OwnedDeliveryResult
-        where
-            K: ToBytes + ?Sized,
-            P: ToBytes + ?Sized,
-            T: Into<Timeout>,
-        {
-            self.0.send(record, queue_timeout).await
+    fn generate_future_message<'a>(
+        data: &'a KafkaMessage,
+        topic: &'a str,
+    ) -> FutureRecord<'a, str, str> {
+        let mut message: FutureRecord<str, str> = FutureRecord::to(topic).payload(&data.payload);
+        if let Some(key) = &data.key {
+            message = message.key(key);
         }
+        if let Some(headers) = &data.headers {
+            message = message.headers(map_to_header(headers));
+        }
+        message
     }
 
-    impl<T> Producer for DefaultFutureProducer where rdkafka::util::Timeout: std::convert::From<T> {
-        fn client(&self) -> &Client<DefaultProducerContext> {
-            self.0.client()
-        }
-        fn in_flight_count(&self) -> i32 {
-            self.0.in_flight_count()
-        }
-        fn flush(&self, timeout: T)
-        {
-            self.0.flush(timeout)
-        }
-
-        fn init_transactions(
-            &self,
-            timeout: T,
-        ) -> rdkafka::error::KafkaResult<()> {
-            self.0.init_transactions(timeout)
-        }
-
-        fn begin_transaction(&self) -> rdkafka::error::KafkaResult<()> {
-            self.0.begin_transaction()
-        }
-
-        fn send_offsets_to_transaction(
-            &self,
-            offsets: &rdkafka::TopicPartitionList,
-            cgm: &rdkafka::consumer::ConsumerGroupMetadata,
-            timeout: T,
-        ) -> rdkafka::error::KafkaResult<()> {
-            self.0.send_offsets_to_transaction(offsets, cgm, timeout)
-        }
-
-        fn commit_transaction(
-            &self,
-            timeout: T,
-        ) -> rdkafka::error::KafkaResult<()> {
-            self.0.commit_transaction(timeout)
-        }
-
-        fn abort_transaction(
-            &self,
-            timeout: T,
-        ) -> rdkafka::error::KafkaResult<()> {
-            self.0.abort_transaction(timeout)
-        }
-
-        fn context(&self) -> &std::sync::Arc<FutureProducerContext<DefaultProducerContext>> {
-            self.client().context()
-        }
-    }
-
-    impl DefaultFutureProducer {
+    impl KafkaProducer<FutureProducer, FutureProducerContext<DefaultClientContext>> {
         ///Put a new message in the producer memory buffer.
         ///As this producer is threaded it is automaticaly polled.
-        pub async fn produce(
-            &self,
-            message: KafkaMessage,
-            timeout: Option<Duration>,
-        ) -> Result<()> {
-            let mut payload: FutureRecord<str, str> =
-                FutureRecord::to(&self.topic).payload(&message.message);
-            if let Some(key) = &message.key {
-                payload = payload.key(key);
-            }
-            if let Some(headers) = message.headers {
-                payload = payload.headers(map_to_header(headers));
-            }
-            let delivery_status = self.producer_type.send(payload, timeout).await;
+        pub async fn produce(&self, data: KafkaMessage, timeout: Option<Duration>) -> Result<()> {
+            let message = generate_future_message(&data, &self.topic);
+            let delivery_status = self.producer_type.send(message, timeout).await;
             if let Err((e, _)) = delivery_status {
-                return Err(KafkaError::DeliveryError(format!("{}", e)));
+                return Err(LibKafkaError::RDKafkaError(e));
             };
             Ok(())
         }
     }
-} */
+}
 
 #[cfg(test)]
 mod producer_test {
