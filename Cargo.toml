@@ -1,7 +1,7 @@
 [package]
 name = "libkafka"
-version = "0.1.0"
-authors = ["grumbach <anselmega@gmail.com>"]
+version = "0.2.0"
+authors = ["Nicolas HAQUET <nicolas.haquet@w6d.io>"]
 edition = "2021"
 
 [lib]
@@ -9,7 +9,8 @@ name = "kafka"
 crate-type = ["lib"]
 
 [dependencies]
-rdkafka = { version = "0.28.*", features = ["cmake-build", "libz"], default-features = false }
+rdkafka = { version = "0.36.*", features = ["cmake-build", "libz"], default-features = false }
+openssl = { version = "0.10.45", features = ["vendored"] }
 thiserror = "1.0.*"
 log = "0.4.*"
 futures-util= "0.3.*"
