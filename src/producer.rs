@@ -15,7 +15,7 @@ pub use rdkafka::producer::{BaseProducer, FutureProducer, ThreadedProducer};
 
 pub type DefaultThreadedProducer = ThreadedProducer<DefaultProducerContext>;
 
-///Struct containin the producer data.
+///Struct contains the producer data.
 #[derive(Clone)]
 pub struct KafkaProducer<T, C = DefaultProducerContext>
 where
@@ -77,8 +77,8 @@ where
 }
 
 impl KafkaProducer<DefaultThreadedProducer> {
-    ///Put a new message in the producer memory buffer.
-    ///As this producer is threaded it is automaticaly polled.
+    /// Put a new message in the producer memory buffer.
+    /// As this producer is threaded it is automatically polled.
     pub fn produce(&self, data: KafkaMessage) -> Result<()> {
         let message = generate_base_message(&data, &self.topic);
         let delivery_status = self.producer_type.send(message);
@@ -90,12 +90,11 @@ impl KafkaProducer<DefaultThreadedProducer> {
 }
 
 impl KafkaProducer<BaseProducer> {
-    ///Put a new message in the producer memory buffer.
-    ///poll must be called to send the message.
+    /// Put a new message in the producer memory buffer.
+    /// poll must be called to send the message.
     pub fn produce(&self, data: KafkaMessage) -> Result<()> {
-        let message = generate_base_message(&data, &self.topic);
-        let delivery_status = self.producer_type.send(message);
-        if let Err((e, _)) = delivery_status {
+        let status = self.producer_type.send(generate_base_message(&data, &self.topic));
+        if let Err((e, _)) = status {
             return Err(LibKafkaError::RDKafkaError(e));
         };
         Ok(())
@@ -134,7 +133,7 @@ pub mod future_producer {
 
     impl KafkaProducer<FutureProducer, FutureProducerContext<DefaultClientContext>> {
         ///Put a new message in the producer memory buffer.
-        ///As this producer is threaded it is automaticaly polled.
+        ///As this producer is threaded it is automatically polled.
         pub async fn produce(&self, data: KafkaMessage, timeout: Option<Duration>) -> Result<()> {
             let message = generate_future_message(&data, &self.topic);
             let delivery_status = self.producer_type.send(message, timeout).await;

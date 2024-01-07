@@ -15,6 +15,7 @@ use crate::{
 };
 
 pub use rdkafka::consumer::BaseConsumer;
+use rdkafka::consumer::DefaultConsumerContext;
 
 #[derive(Debug, Clone)]
 pub struct KafkaConsumer<T: Consumer> {
@@ -51,7 +52,7 @@ impl<T: Consumer + FromClientConfig> KafkaConsumer<T> {
 }
 
 impl KafkaConsumer<BaseConsumer> {
-    ///Extract a message frome a BaseConsume.
+    ///Extract a message from a BaseConsume.
     ///If the timeout is none this function block until a message is received.
     #[allow(unused_variables)]
     pub fn consume(&self, timeout: Option<Duration>) -> Result<Option<KafkaMessage>> {
@@ -83,7 +84,7 @@ pub use rdkafka::consumer::StreamConsumer;
 
 #[cfg(any(feature = "async", test))]
 impl KafkaConsumer<StreamConsumer> {
-    ///Extract a message frome a StreamConsumer.
+    ///Extract a message from a StreamConsumer.
     ///This function block until a message is received.
     ///If debug_kafka feature is enabled only return a debug message,
     ///only use this for testing purpose.
@@ -103,10 +104,10 @@ impl KafkaConsumer<StreamConsumer> {
         extract_message(message)
     }
 
-    ///Constructs a stream that yields messages from this consumer.
-    ///To use this stream it is recomended to use a library that implements stream utilities
-    ///like futures or tokio_stream.
-    pub fn stream(&self) -> MessageStream<'_> {
+    /// Constructs a stream that yields messages from this consumer.
+    /// To use this stream it is recommended to use a library that implements stream utilities
+    /// like futures or tokio_stream.
+    pub fn stream(&self) -> MessageStream<'_, DefaultConsumerContext> {
         self.consumer_type.stream()
     }
 }

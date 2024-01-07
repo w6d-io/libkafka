@@ -1,6 +1,6 @@
 [package]
 name = "libkafka"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Nicolas HAQUET <nicolas.haquet@w6d.io>"]
 edition = "2021"
 
