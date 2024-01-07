@@ -1,0 +1,23 @@
+on:
+  pull_request:
+    paths:
+      - src/**
+      - Cargo.lock
+      - Cargo.toml
+    types:
+      - closed
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag and prepare release
+        id: tag_and_prepare_release
+        uses: K-Phoen/semver-release-action@master
+        with:
+          release_branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -69,7 +69,10 @@ where
     ///This method should be called before termination to ensure delivery of
     ///all enqueued messages. It will call poll() internally.
     pub fn flush(&self, timeout: Option<Duration>) {
-        self.producer_type.flush(timeout);
+        match self.producer_type.flush(timeout) {
+            Ok(_) => (),
+            Err(_) => ()
+        }
     }
 }
 
@@ -101,7 +104,7 @@ impl KafkaProducer<BaseProducer> {
     ///Polls the producer, returning the number of events served.
     ///Regular calls to poll are required to process the events and execute
     ///the message delivery callbacks.
-    pub fn poll(&self, timeout: Option<Duration>) -> i32 {
+    pub fn poll(&self, timeout: Option<Duration>) -> () {
         self.producer_type.poll(timeout)
     }
 }
