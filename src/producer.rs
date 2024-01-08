@@ -2,6 +2,7 @@ use std::{collections::HashMap, marker::PhantomData, time::Duration};
 
 use rdkafka::{
     config::{ClientConfig, FromClientConfig},
+    error::KafkaError,
     producer::{BaseRecord, DefaultProducerContext, Producer, ProducerContext},
 };
 
@@ -68,11 +69,8 @@ where
     ///Flushes any pending messages.
     ///This method should be called before termination to ensure delivery of
     ///all enqueued messages. It will call poll() internally.
-    pub fn flush(&self, timeout: Option<Duration>) {
-        match self.producer_type.flush(timeout) {
-            Ok(_) => (),
-            Err(_) => ()
-        }
+    pub fn flush(&self, timeout: Option<Duration>) -> Result<(), KafkaError> {
+        self.producer_type.flush(timeout)
     }
 }
 
@@ -93,7 +91,9 @@ impl KafkaProducer<BaseProducer> {
     /// Put a new message in the producer memory buffer.
     /// poll must be called to send the message.
     pub fn produce(&self, data: KafkaMessage) -> Result<()> {
-        let status = self.producer_type.send(generate_base_message(&data, &self.topic));
+        let status = self
+            .producer_type
+            .send(generate_base_message(&data, &self.topic));
         if let Err((e, _)) = status {
             return Err(LibKafkaError::RDKafkaError(e));
         };

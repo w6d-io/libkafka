@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use log::error;
 use rdkafka::message::{Header, Headers, OwnedHeaders};
 
 use crate::{
@@ -13,22 +14,33 @@ pub use rdkafka::message::Message;
 pub fn headers_to_map<T: Headers>(headers: &T) -> Result<HashMap<String, String>> {
     let size = headers.count();
 
-    let mut map: HashMap<String,String> = HashMap::with_capacity(size);
+    let mut map: HashMap<String, String> = HashMap::with_capacity(size);
     for header in headers.iter() {
-        map.insert(header.key.to_owned(), String::from_utf8(header.value.unwrap().to_vec()).unwrap().to_string());
+        if let Some(val) = header.value {
+            let value = match String::from_utf8(val.to_vec()){
+                Ok(v) => v,
+                Err(e) => {
+                    error!("header value is not a valid string: {e}");
+                    continue
+                },
+            };
+            map.insert(
+                header.key.to_owned(),
+                value
+            );
+        }
     }
-    // for i in 0..size {
-    //     if let Some((k, v)) = headers.get_as::<str>(i) {
-    //         map.insert(k.to_owned(), v?.to_owned());
-    //     }
-    // }
     Ok(map)
 }
 
 ///Convert hashmap to kafka message headers.
 pub fn map_to_header(map: &HashMap<String, String>) -> OwnedHeaders {
-    map.iter()
-        .fold(OwnedHeaders::new(), |headers, (k, v)| headers.insert(Header {key: k, value: Some(v)}))
+    map.iter().fold(OwnedHeaders::new(), |headers, (k, v)| {
+        headers.insert(Header {
+            key: k,
+            value: Some(v),
+        })
+    })
 }
 
 ///extract payload, header and key from a struct implementing the Message trait
