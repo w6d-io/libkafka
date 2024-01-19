@@ -2,10 +2,11 @@ use std::{collections::HashMap, time::Duration};
 
 #[cfg(any(feature = "kafka_debug", test))]
 use rdkafka::message::{OwnedMessage, Timestamp};
-use rdkafka::{
-    config::{ClientConfig, FromClientConfig},
-    consumer::Consumer,
-};
+use rdkafka::config::{ClientConfig, FromClientConfig};
+
+
+
+
 
 #[allow(unused_imports)]
 use crate::{
@@ -14,8 +15,7 @@ use crate::{
     KafkaMessage,
 };
 
-pub use rdkafka::consumer::BaseConsumer;
-use rdkafka::consumer::DefaultConsumerContext;
+pub use rdkafka::consumer::{BaseConsumer, Consumer};
 
 #[derive(Debug, Clone)]
 pub struct KafkaConsumer<T: Consumer> {
@@ -78,7 +78,7 @@ impl KafkaConsumer<BaseConsumer> {
 }
 
 #[cfg(any(feature = "async", test))]
-use rdkafka::consumer::MessageStream;
+use rdkafka::consumer::{MessageStream, DefaultConsumerContext};
 #[cfg(any(feature = "async", test))]
 pub use rdkafka::consumer::StreamConsumer;
 
