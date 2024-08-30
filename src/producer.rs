@@ -32,7 +32,6 @@ where
 pub fn default_config(broker: &str) -> HashMap<String, String> {
     HashMap::from([
         ("bootstrap.servers".to_owned(), broker.to_owned()),
-        ("session.timeout.ms".to_owned(), "5000".to_owned()),
     ])
 }
 
