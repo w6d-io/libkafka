@@ -1,6 +1,6 @@
 [package]
 name = "libkafka"
-version = "0.2.1"
+version = "0.2.4"
 authors = ["Nicolas HAQUET <nicolas.haquet@w6d.io>"]
 edition = "2021"
 
@@ -17,7 +17,7 @@ futures-util= "0.3.*"
 anyhow = { version = "1.0.*", optional = true}
 
 [dev-dependencies]
-tokio = { version = "1.24", features = ["macros", "rt"]}
+tokio = { version = "1.40", features = ["macros", "rt"]}
 rand = "0.8"
 
 [features]
